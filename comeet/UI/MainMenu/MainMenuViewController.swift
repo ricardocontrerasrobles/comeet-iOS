@@ -71,7 +71,7 @@ private extension MainMenuViewController {
 //        viewModel?.reloadBinding = { [weak self] in
 //
 //        }
-//        viewModel?.fetchMeetings()
+        viewModel?.fetchMeetings()
         showRoomsList()
     }
     

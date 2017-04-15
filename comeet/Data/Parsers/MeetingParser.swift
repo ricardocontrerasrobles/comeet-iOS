@@ -17,6 +17,77 @@ class MeetingParser {
         static let startKey = "start"
         static let endKey = "end"
         static let roomKey = "room"
+        static let metingcreatorKey = "meetingcreator"
+        static let requiredattendeesKey = "requiredattendees"
+        static let optionalattendeesKey = "optionalattendees"
+    }
+    
+    static func parseMeeting(meetingDict: [AnyHashable : Any]) -> Meeting? {
+        
+        
+        var subject: String?
+        if let subjectValue = meetingDict[Constants.subjectKey] as? String {
+            subject = subjectValue
+        }
+        
+        var body: String?
+        if let bodyValue = meetingDict[Constants.bodyKey] as? String {
+            body = bodyValue
+        }
+        
+        var location: String?
+        if let locationValue = meetingDict[Constants.locationKey] as? String {
+            location = locationValue
+        }
+        
+        var start: Date?
+        if let startValue = meetingDict[Constants.startKey] as? String{
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            start = formatter.date(from: startValue)
+        }
+        
+        var end: Date?
+        if let endValue = meetingDict[Constants.endKey] as? String{
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            end = formatter.date(from: endValue)
+        }
+        
+        // TO-DO - room, creator, attendees
+        let room = nil as Room?
+        let meetingcreator = nil as User?
+        let requiredattendees = [] as [User]?
+        let optionalattendees = [] as [User]?
+        
+        
+        return Meeting(subject: subject, body: body, start: start, end: end, location: location, room: room, meetingcreator: meetingcreator, requiredattendees: requiredattendees, optionalattendees: optionalattendees)
+    }
+    
+    static func parseMeetings(meetingsArray: [Any]) -> [Meeting] {
+        var meetings:[Meeting] = []
+        for meetingDict in meetingsArray {
+            print("ENTER ")
+            
+            if let meetingDict = meetingDict as? [AnyHashable : Any] {
+                
+                if let meeting = parseMeeting(meetingDict: meetingDict) {
+                    
+                    meetings.append(meeting)
+                }
+            }
+        }
+        return meetings
+    }
+    
+    /*
+    internal struct Constants {
+        static let subjectKey = "subject"
+        static let bodyKey = "body"
+        static let locationKey = "location"
+        static let startKey = "start"
+        static let endKey = "end"
+        static let roomKey = "room"
         static let metingcreatorKey = "metingcreator"
         static let requiredattendeesKey = "requiredattendees"
         static let optionalattendeesKey = "optionalattendees"
@@ -70,5 +141,5 @@ class MeetingParser {
             }
         }
         return meetings
-    }
+    }*/
 }

@@ -10,13 +10,13 @@ import Foundation
 
 struct Meeting {
 
-    let subject: String
-    let body: String
-    let start: Date
-    let end: Date
-    let location: String
-    let room: Room
-    let metingcreator: User
-    let requiredattendees: [User]
-    let optionalattendees: [User]
+    let subject: String?
+    let body: String?
+    let start: Date?
+    let end: Date?
+    let location: String?
+    let room: Room?
+    let meetingcreator: User?
+    let requiredattendees: [User]?
+    let optionalattendees: [User]?
 }

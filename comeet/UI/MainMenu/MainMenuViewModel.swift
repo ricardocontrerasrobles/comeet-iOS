@@ -26,11 +26,24 @@ class MainMenuViewModel : BaseViewModel {
     }
     
     func fetchMeetings() {
-        let start = Date().stringForAPI()
-        let end = Date().addingTimeInterval(60 * 60 * 24).stringForAPI()
+        let start = ""
+        print(start)
+        let end = ""
+        
+        
         
         fetcher.getMeetings(organization: authenticator.getOrganization(), user: "", start: start, end: end) { [weak self] (meetings: [Meeting]?, error: Error?) in
             if let meetings = meetings {
+                
+                /*
+                for me in meetings{
+                    print(me.subject)
+                    print(me.body)
+                    print(me.location)
+                    print(me.start?.displayString())
+                    print(me.end?.displayString())
+                }*/
+                
                 self?.meetings = meetings
                 self?.reloadBinding?()
             }
@@ -56,8 +69,8 @@ private extension MainMenuViewModel {
         let event = SSEvent()
         
         event.startDate = meeting.start
-        event.startTime = meeting.start.displayStringHourMinute()
-        event.endTime = meeting.end.displayStringHourMinute()
+        event.startTime = meeting.start?.displayStringHourMinute()
+        event.endTime = meeting.end?.displayStringHourMinute()
         event.name = meeting.subject
         return event
     }
