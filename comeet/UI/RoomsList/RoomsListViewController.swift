@@ -16,6 +16,7 @@ class RoomsListViewController: BaseViewController {
     @IBOutlet weak var sliderView: MARKRangeSlider!
     @IBOutlet weak var startTimelabel: UILabel!
     @IBOutlet weak var endTimelabel: UILabel!
+    @IBOutlet weak var selectLocationButton: UIButton!
     
     var viewModel: RoomsListViewModel?
     internal struct Constants {
@@ -29,11 +30,20 @@ class RoomsListViewController: BaseViewController {
         setup()
     }
     
+    @IBAction func goToMetro(_ sender: Any) {
+        performSegue(withIdentifier: Router.Constants.metroareaSegue, sender: self)
+    }
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         guard let identifier = segue.identifier,
             let viewModel = viewModel else {
                 return
         }
+        
+        if segue.identifier == Router.Constants.metroareaSegue {
+            prepareForPopUp(controller: segue.destination)
+        }
+        
         Router.prepare(identifier: identifier, destination: segue.destination, sourceViewModel: viewModel)
     }
     
@@ -57,39 +67,75 @@ class RoomsListViewController: BaseViewController {
         let startMinutesString = minutes > 9 ? "\(minutes)" : "0\(minutes)"
         return "\(startHoursString):\(startMinutesString)"
     }
+    
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return UIModalPresentationStyle.none
+    }
+    
+    func newLocation(sender: Any) {
+        viewModel?.newLocation(metroarea: Router.selectedMetroarea, roomsList: Router.selectedRoomsList)
+        selectLocationButton.setTitle(viewModel?.roomsList?.name, for: .normal)
+    }
+    
+    func book(sender: Any) {
+        guard let button = sender as? UIButton else {
+            return
+        }
+        
+        if let room = viewModel?.room(index: button.tag) {
+            Router.selectedRoom = room
+            performSegue(withIdentifier: Router.Constants.roomDetailSegue, sender: nil)
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
 }
 
 private extension RoomsListViewController {
     
     func setup() {
         
-        view.backgroundColor = .red
-//        tableView.backgroundColor = .blue
+        guard let viewModel = viewModel else {
+            return
+        }
         
-        title = viewModel?.title()
+        title = viewModel.title()
         
-//        viewModel?.reloadBinding = { [weak self] (rooms) in
-//            self?.tableView.reloadData()
-//        }
-//        viewModel?.fetchRooms()
-//        
-//        let tenHours: Int = 60 * 10
-//        
-//        let hour: Int = Calendar.current.component(.hour, from: Date())
-//        let minute: Int = Calendar.current.component(.minute, from: Date())
-//        let startValue: Int = (hour * 60) + minute
-//        let endValue: Int = startValue + tenHours
-//        let endAutoSelect: Int = startValue + 120
-//        
-//        sliderView.setMinValue(CGFloat(startValue), maxValue: CGFloat(endValue))
-//        sliderView.setLeftValue(CGFloat(startValue), rightValue: CGFloat(endAutoSelect))
-//        sliderView.addTarget(self, action: #selector(sliderChange(slider:)), for: .valueChanged)
-//        
-//        sliderChange(slider: sliderView)
+        viewModel.reloadBinding = { [weak self] (rooms) in
+            self?.tableView.reloadData()
+        }
+        viewModel.fetchRooms()
+        
+        let tenHours: Int = 60 * 10
+        
+        let hour: Int = Calendar.current.component(.hour, from: Date())
+        let minute: Int = Calendar.current.component(.minute, from: Date())
+        let startValue: Int = (hour * 60) + minute
+        let endValue: Int = startValue + tenHours
+        let endAutoSelect: Int = startValue + 120
+        
+        sliderView.setMinValue(CGFloat(startValue), maxValue: CGFloat(endValue))
+        sliderView.setLeftValue(CGFloat(startValue), rightValue: CGFloat(endAutoSelect))
+        sliderView.addTarget(self, action: #selector(sliderChange(slider:)), for: .valueChanged)
+        
+        sliderChange(slider: sliderView)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector (newLocation(sender:)), name: NSNotification.Name(rawValue: "RoomsListNewLocation"), object: nil)
+        
+        if (viewModel.locationPersisted()) {
+            selectLocationButton.setTitle(viewModel.roomsList?.name, for: .normal)
+        } else {
+            performSegue(withIdentifier: Router.Constants.metroareaSegue, sender: self)
+        }
     }
     
-    func addRoomsTable() {
-        
+    func prepareForPopUp(controller: UIViewController) {
+        controller.modalPresentationStyle = UIModalPresentationStyle.popover
+        controller.popoverPresentationController?.delegate = self
+        controller.popoverPresentationController?.sourceRect = CGRect(x: 0, y: 0, width: selectLocationButton.bounds.width, height: selectLocationButton.bounds.height)
     }
 }
 
@@ -100,19 +146,20 @@ extension RoomsListViewController : UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.roomCellIdentifier, for: indexPath)
-        cell.textLabel?.text = viewModel?.roomName(index: indexPath.row)
-        cell.detailTextLabel?.text = viewModel?.roomDescription(index: indexPath.row)
         
+        guard let roomCell = cell as? RoomTableViewCell else {
+            return cell
+        }
         
-
-        cell.imageView?.contentMode = .scaleAspectFit
-        //cell.imageView?.contentMode = UIViewContentMode.scaleAspectFill
-        cell.imageView?.clipsToBounds = true
+        roomCell.roomName.text = viewModel?.roomName(index: indexPath.row)
+        roomCell.roomCapacity.text = viewModel?.roomDescription(index: indexPath.row)
+        roomCell.bookButton.tag = indexPath.row
+        roomCell.bookButton.addTarget(self, action: #selector(book(sender:)), for: .touchUpInside)
         
         if let roomPicture = viewModel?.roomPicture(index: indexPath.row) {
-            cell.imageView?.sd_setImage(with: roomPicture, placeholderImage: UIImage(named: Constants.placeholderImage))
+            roomCell.roomImage.sd_setImage(with: roomPicture, placeholderImage: UIImage(named: Constants.placeholderImage))
         } else {
-            cell.imageView?.image = nil 
+            roomCell.roomImage.image = nil
         }
         
         return cell
@@ -121,10 +168,9 @@ extension RoomsListViewController : UITableViewDataSource {
 
 extension RoomsListViewController : UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if let room = viewModel?.room(index: indexPath.row) {
-            Router.selectedRoom = room
-            performSegue(withIdentifier: Router.Constants.roomDetailSegue, sender: self)
-        }
     }
+}
+
+extension RoomsListViewController : UIPopoverPresentationControllerDelegate {
+
 }

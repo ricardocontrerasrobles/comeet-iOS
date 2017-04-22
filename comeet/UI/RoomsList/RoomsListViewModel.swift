@@ -12,17 +12,19 @@ class RoomsListViewModel : BaseViewModel {
     
     let authenticator: AuthenticatorProtocol
     let fetcher: FetcherProtocol
+    let persistor: PersistorProtocol
     var reloadBinding: ReloadBinding?
     internal let selectedDate: Date
-    private let metroarea: String
-    private let roomsList: User
+    private var metroarea: String?
+    private(set) var roomsList: User?
     internal var rooms: [Room] = []
     internal var startDate : Date
     internal var endDate : Date
     
-    init(authenticator: AuthenticatorProtocol, fetcher: FetcherProtocol, selectedDate: Date, metroarea: String, roomsList: User) {
+    init(authenticator: AuthenticatorProtocol, fetcher: FetcherProtocol, persistor: PersistorProtocol, selectedDate: Date, metroarea: String?, roomsList: User?) {
         self.metroarea = metroarea
         self.roomsList = roomsList
+        self.persistor = persistor
         self.authenticator = authenticator
         self.fetcher = fetcher
         self.selectedDate = selectedDate
@@ -35,8 +37,17 @@ class RoomsListViewModel : BaseViewModel {
         static let endDateText = "Select End"
     }
     
+    func newLocation(metroarea: String?, roomsList: User?) {
+        self.metroarea = metroarea
+        self.roomsList = roomsList
+        fetchRooms()
+    }
+    
     func title() -> String {
-        return "Rooms in " + roomsList.name
+        guard let name = roomsList?.name else {
+            return "Select a Room"
+        }
+        return "Rooms in " + name
     }
     
     func startDateString() -> String {
@@ -48,7 +59,10 @@ class RoomsListViewModel : BaseViewModel {
     }
     
     func fetchRooms() {
-        fetcher.getRooms(organization: authenticator.getOrganization(), roomlist: roomsList.email, start: startDateForRequest(), end: endDateForRequest()) { [weak self] (rooms, error) in
+        guard let email = roomsList?.email else {
+            return
+        }
+        fetcher.getRooms(organization: authenticator.getOrganization(), roomlist: email, start: startDateForRequest(), end: endDateForRequest()) { [weak self] (rooms, error) in
             guard error == nil else {
                 print(error!)
                 return
@@ -113,6 +127,18 @@ class RoomsListViewModel : BaseViewModel {
         endDate = dateFrom(hours: hours, minutes: minutes)
         reloadBinding?()
     }
+    
+    func locationPersisted() -> Bool {
+        if let metroarea = persistor.getMetroArea(),
+            let roomlist = persistor.getRoomlist() {
+            Router.selectedMetroarea = metroarea
+            Router.selectedRoomsList = roomlist
+            newLocation(metroarea: metroarea, roomsList: roomlist)
+            return true
+        } else {
+            return false
+        }
+    }
 }
 
 private extension RoomsListViewModel {
@@ -137,12 +163,13 @@ private extension RoomsListViewModel {
     }
     
     func availableRooms() -> [Room] {
-                
-        return rooms.filter({ (room) -> Bool in
-            guard let freebusy = room.freebusy, freebusy.count > 0 else {
-                return true
-            }
-            return freebusy.containsFree(start: startDate, end: endDate)
-        })
+              return rooms
+        // TODO: Correct filter criteria
+//        return rooms.filter({ (room) -> Bool in
+//            guard let freebusy = room.freebusy, freebusy.count > 0 else {
+//                return true
+//            }
+//            return freebusy.containsFree(start: startDate, end: endDate)
+//        })
     }
 }

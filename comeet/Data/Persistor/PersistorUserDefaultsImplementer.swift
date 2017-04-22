@@ -12,7 +12,8 @@ class PersistorUserDefaultsImplementer : PersistorProtocol {
     
     private struct Constants {
         static let metroAreaKey = "metroAreaKey"
-        static let roomlistKey = "roomlistKey"
+        static let roomlistNameKey = "roomlistNameKey"
+        static let roomlistEmailKey = "roomlistEmailKey"
     }
     
     func save(metroArea: String?) {
@@ -24,16 +25,24 @@ class PersistorUserDefaultsImplementer : PersistorProtocol {
         return UserDefaults.standard.string(forKey: Constants.metroAreaKey)
     }
     
-    func save(roomlist: [User]?) {
-        UserDefaults.standard.set(roomlist, forKey: Constants.roomlistKey)
+    func save(roomlist: User?) {
+        guard let roomlist = roomlist else {
+            return
+        }
+        
+        UserDefaults.standard.set(roomlist.name, forKey: Constants.roomlistNameKey)
+        UserDefaults.standard.set(roomlist.email, forKey: Constants.roomlistEmailKey)
         UserDefaults.standard.synchronize()
     }
     
-    func getRoomlist() -> [User]? {
-        if let roomlist = UserDefaults.standard.object(forKey: Constants.roomlistKey) as? [User] {
-            return roomlist
-        } else {
-            return nil
+    func getRoomlist() -> User? {
+        
+        guard let name = UserDefaults.standard.object(forKey: Constants.roomlistNameKey) as? String,
+            let email = UserDefaults.standard.object(forKey: Constants.roomlistEmailKey) as? String else {
+                return nil
         }
+        
+        let user = User(name: name, email: email)
+        return user
     }
 }

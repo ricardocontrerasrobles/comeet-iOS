@@ -38,19 +38,8 @@ private extension MetroareaViewController {
         
         viewModel?.reloadBinding = { [weak self] (rooms) in
             self?.tableView.reloadData()
-            
-            guard let metroarea = self?.viewModel?.metroareaCached(),
-                let roomlist = self?.viewModel?.roomsLists(metroarea: metroarea) else  {
-                    return
-            }
-            
-            Router.selectedMetroarea = metroarea
-            Router.selectedRoomsLists = roomlist
-            self?.performSegue(withIdentifier: Router.Constants.roomsListsSegue, sender: self)
         }
         viewModel?.fetchSearchCriteria()
-        
-        
     }
 }
 

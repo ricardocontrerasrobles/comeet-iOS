@@ -13,6 +13,7 @@ class RoomsListViewModelTests: XCTestCase {
     
     var viewModel: RoomsListViewModel?
     var authenticator: FakeAuthenticator?
+    var persistor = PersistorUserDefaultsImplementer()
     var fetcher: FakeFetcher?
     
     override func setUp() {
@@ -20,7 +21,7 @@ class RoomsListViewModelTests: XCTestCase {
         authenticator = FakeAuthenticator()
         fetcher = FakeFetcher()
         let roomlist = User(name: "A Building", email: "test@test.com")
-        viewModel = RoomsListViewModel(authenticator: authenticator!, fetcher: fetcher!, selectedDate: Date(), metroarea: "A City", roomsList: roomlist)
+        viewModel = RoomsListViewModel(authenticator: authenticator!, fetcher: fetcher!, persistor: persistor,selectedDate: Date(), metroarea: "A City", roomsList: roomlist)
     }
     
     override func tearDown() {

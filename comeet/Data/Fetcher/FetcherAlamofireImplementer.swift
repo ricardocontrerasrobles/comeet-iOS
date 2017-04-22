@@ -45,12 +45,11 @@ class FetcherAlamofireImplementer : FetcherProtocol {
     func bookRoom(organization: String, roomrecipient: String, params: [String: Any], completion:@escaping BookRoomCompletion) {
         let endpoint = endpoints.bookRoom(organization: organization, roomrecipient: roomrecipient)
         sessionManager.request(endpoint, method: .post, parameters: params, encoding: URLEncoding.httpBody).responseJSON { (response) in
-            guard let json = response.result.value as? [String : Bool],
-                let success = json["success"] else {
+            guard response.response?.statusCode == 200 else {
                 completion(false, response.error)
                 return;
             }
-            completion(success, response.error)
+            completion(true, response.error)
         }
     }
     

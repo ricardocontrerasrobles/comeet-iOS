@@ -48,4 +48,8 @@ class RoomsListsViewModel : BaseViewModel {
     func getMetroarea() -> String {
         return metroarea
     }
+    
+    func save(roomlist: User) {
+        persistor.save(roomlist: roomlist)
+    }
 }

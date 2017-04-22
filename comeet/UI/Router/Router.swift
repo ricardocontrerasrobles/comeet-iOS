@@ -59,9 +59,17 @@ class Router {
     }
     
     private static func prepareMetroarea(identifier: String, destination: UIViewController, sourceViewModel: BaseViewModel) {
+        
+        var finalDestination: UIViewController = destination
+        
+        if let navController = destination as? UINavigationController,
+            let topController = navController.topViewController {
+            finalDestination = topController
+        }
+        
         guard identifier == Constants.metroareaSegue,
-            let toVC = destination as? MetroareaViewController,
-            let fromVM = sourceViewModel as? MainMenuViewModel else {
+            let toVC = finalDestination as? MetroareaViewController,
+            let fromVM = sourceViewModel as? RoomsListViewModel else {
                 assert(false, Constants.incorrectRouteMessage)
                 return
         }
@@ -95,7 +103,7 @@ class Router {
                 return
         }
         
-        let toVM = RoomsListViewModel(authenticator: fromVM.authenticator, fetcher: fromVM.fetcher, selectedDate: fromVM.selectedDate, metroarea: metroarea, roomsList: roomsList)
+        let toVM = RoomsListViewModel(authenticator: fromVM.authenticator, fetcher: fromVM.fetcher, persistor: fromVM.persistor, selectedDate: fromVM.selectedDate, metroarea: metroarea, roomsList: roomsList)
         toVC.viewModel = toVM
     }
     
