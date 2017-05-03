@@ -35,8 +35,10 @@ class MyAgendaViewModel : BaseViewModel {
     }
     
     func fetchMeetings() {
+        let start = selectedDate.startOfDay().stringISO8601()
+        let end = selectedDate.nextWeek()?.stringISO8601() ?? selectedDate.stringISO8601()
         
-        fetcher.getMeetings(organization: authenticator.getOrganization(), user: "", start: "", end: "") { [weak self] (meetings: [Meeting]?, error: Error?) in
+        fetcher.getMeetings(organization: authenticator.getOrganization(), user: "", start: start, end: end) { [weak self] (meetings: [Meeting]?, error: Error?) in
             
             guard error == nil else {
                 // TODO: surface error in UI?

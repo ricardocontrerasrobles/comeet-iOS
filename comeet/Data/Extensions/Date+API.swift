@@ -49,6 +49,12 @@ extension Date {
         return Calendar.current.date(byAdding: components, to: startOfDay())
     }
     
+    func nextWeek() -> Date? {
+        var components = DateComponents()
+        components.day = 7
+        return Calendar.current.date(byAdding: components, to: startOfDay())
+    }
+    
     static var is24HoursFormat : Bool  {
         
         let formatter = DateFormatter()
